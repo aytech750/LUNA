@@ -8,6 +8,7 @@
   <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-storage.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
 </head>
@@ -21,17 +22,17 @@
       <input type="email" id="email" placeholder="Email" required />
       <input type="password" id="password" placeholder="Password" required />
       <div class="record-wakeword">
-  <p class="record-title">Record Your Wake Word</p>
-  <button type="button" class="record-btn" onclick="startRecording()">
-    <img src="https://cdn-icons-png.flaticon.com/512/727/727245.png" alt="Mic" class="mic-icon">
-    <span>Start Recording</span>
-  </button>
-  <p class="record-status" id="record-status">Not recording</p>
-</div>
+        <p class="record-title">Record Your Wake Word</p>
+       <!-- Replace this button onclick -->
+<button type="button" class="record-btn" onclick="handleWakeWordRecording()">
 
+          <img src="https://cdn-icons-png.flaticon.com/512/727/727245.png" alt="Mic" class="mic-icon">
+          <span>Start Recording</span>
+        </button>
+        <p class="record-status" id="record-status">Not recording</p>
+      </div>
       <button type="submit">Sign Up</button>
     </form>
-
     <div id="spinnerOverlay" class="spinner-overlay">
       <img src="https://i.imgur.com/8KlT8jJ.png" alt="Luna Spinner" class="spinner-logo" />
     </div>
@@ -86,7 +87,7 @@
     <p>&copy; 2025 Luna AI - Created by AyTech</p>
   </div>
 </section>
-  <!-- About section skipped for brevity -->
+  </div>
 
   <script>
     const firebaseConfig = {
@@ -100,38 +101,71 @@
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
-
+    const storage = firebase.storage();
     let mediaRecorder;
-    let wakeWordBlob;
+let wakeWordBlob;
+let recordedWakeWord = "";
 
-    async function startRecording() {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorder = new MediaRecorder(stream);
-      const audioChunks = [];
+  async function handleWakeWordRecording() {
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  mediaRecorder = new MediaRecorder(stream);
+  const audioChunks = [];
 
-      mediaRecorder.ondataavailable = event => {
-        audioChunks.push(event.data);
-      };
+  const status = document.getElementById("record-status");
+  status.textContent = "Recording... Please say your wake word";
 
-      mediaRecorder.onstop = () => {
-        wakeWordBlob = new Blob(audioChunks, { type: 'audio/webm' });
-        document.getElementById("wakewordPreview").src = URL.createObjectURL(wakeWordBlob);
-      };
+  // Voice recognition setup
+  const recognition = new webkitSpeechRecognition();
+  recognition.lang = 'en-US';
+  recognition.start();
 
-      mediaRecorder.start();
-    }
+  recognition.onresult = function (event) {
+    recordedWakeWord = event.results[0][0].transcript.trim().toLowerCase();
+    status.textContent = `Recognized: "${recordedWakeWord}"`;
 
-    function stopRecording() {
-      if (mediaRecorder && mediaRecorder.state !== "inactive") {
-        mediaRecorder.stop();
-      }
-    }
+    const email = document.getElementById("email").value;
+    db.collection("wakewords").doc(email).set({
+      wakeword: recordedWakeWord
+    }).then(() => {
+      Toastify({
+        text: "Wake word saved.",
+        duration: 3000,
+        gravity: "top",
+        position: "right",
+        backgroundColor: "#4caf50",
+      }).showToast();
+    }).catch(err => {
+      Toastify({
+        text: "Error saving wake word: " + err.message,
+        duration: 3000,
+        gravity: "top",
+        position: "right",
+        backgroundColor: "#d32f2f",
+      }).showToast();
+    });
+  };
+
+  mediaRecorder.ondataavailable = event => {
+    audioChunks.push(event.data);
+  };
+
+  mediaRecorder.onstop = () => {
+    wakeWordBlob = new Blob(audioChunks, { type: 'audio/webm' });
+  };
+
+  mediaRecorder.start();
+
+  setTimeout(() => {
+    mediaRecorder.stop();
+    recognition.stop();
+  }, 4000);
+}
+
 
     const form = document.getElementById("signupForm");
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
 
-      document.getElementById("spinnerOverlay").style.display = "flex";
       const name = document.getElementById("name").value;
       const email = document.getElementById("email").value;
       const password = document.getElementById("password").value;
@@ -139,22 +173,20 @@
       const btn = form.querySelector("button[type='submit']");
       btn.disabled = true;
       btn.textContent = "Creating account...";
-
+       document.getElementById("spinnerOverlay").style.display = "flex";
+       
       try {
         const userCredential = await auth.createUserWithEmailAndPassword(email, password);
         const uid = userCredential.user.uid;
 
-        // Save user data
         await db.collection("users").doc(uid).set({
           name,
           email,
           createdAt: new Date()
         });
 
-        // Upload wake word if recorded
         if (wakeWordBlob) {
-          const storageRef = firebase.storage().ref();
-          const audioRef = storageRef.child(`wakewords/${uid}.webm`);
+          const audioRef = storage.ref().child(`wakewords/${uid}.webm`);
           await audioRef.put(wakeWordBlob);
         }
 
@@ -171,6 +203,7 @@
         }).showToast();
 
         setTimeout(() => {
+            document.getElementById("spinnerOverlay").style.display = "none";
           window.location.href = "dashboard.html";
         }, 3500);
 
@@ -186,7 +219,6 @@
 
         btn.disabled = false;
         btn.textContent = "Sign Up";
-        document.getElementById("spinnerOverlay").style.display = "none";
       }
     });
 
@@ -198,15 +230,6 @@
       if (femaleVoice) utterance.voice = femaleVoice;
       speechSynthesis.speak(utterance);
     }
-  function startRecording() {
-    const statusText = document.getElementById("record-status");
-    statusText.textContent = "Recording... Please say your wake word";
-    // Placeholder: Add real recording logic here using MediaRecorder or WebSpeech API
-    setTimeout(() => {
-      statusText.textContent = "Wake word recorded successfully!";
-    }, 4000);
-  }
-
   </script>
 </body>
 </html>

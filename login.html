@@ -7,6 +7,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="login.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+  <!-- Firebase Core SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
 </head>
 <body>
 
@@ -30,7 +33,14 @@
       <a href="signup.html">Sign up</a>
     </p>
   </form>
-
+<div class="record-wakeword">
+  <p class="record-title">Login with Wake Word</p>
+  <button type="button" class="record-btn" onclick="listenForWakeWord()">
+    <img src="https://cdn-icons-png.flaticon.com/512/727/727245.png" alt="Mic" class="mic-icon">
+    <span>Say Wake Word</span>
+  </button>
+  <p class="record-status" id="login-status">Not listening</p>
+</div>
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
@@ -168,5 +178,127 @@
       100% { transform: rotate(360deg); }
     }
   </style>
+  <script>
+// Simulate login by matching voice input
+function listenForWakeWord() {
+  const loginStatus = document.getElementById("login-status");
+  if (!recordedWakeWord) {
+    lunaSpeak("Please record your wake word first.");
+    loginStatus.textContent = "Wake word not set.";
+    return;
+  }
+
+  loginStatus.textContent = "Listening for your wake word...";
+  lunaSpeak("Please say your wake word now.");
+  
+  setTimeout(() => {
+    startSpeechRecognition((inputWord) => {
+      const said = inputWord.trim().toLowerCase();
+      if (similarity(said, recordedWakeWord) >= wakeWordMatchThreshold) {
+        loginStatus.textContent = `Login Successful! Matched: "${said}"`;
+        lunaSpeak("Welcome back! You are now logged in.");
+        // Simulate redirect or dashboard logic
+        setTimeout(() => {
+          window.location.href = "/dashboard.html";
+        }, 2000);
+      } else {
+        loginStatus.textContent = `Login Failed. You said: "${said}"`;
+        lunaSpeak("Sorry, that doesn't match your wake word. Please try again.");
+      }
+    });
+  }, 2500);
+}
+
+// Use Web Speech API for voice input
+function startSpeechRecognition(callback) {
+  recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+  recognition.lang = 'en-US';
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
+
+  recognition.onresult = function(event) {
+    const transcript = event.results[0][0].transcript;
+    callback(transcript);
+  };
+
+  recognition.onerror = function(event) {
+    lunaSpeak("I didn't catch that. Please try again.");
+    console.error("Speech recognition error:", event.error);
+  };
+
+  recognition.start();
+}
+
+// Basic string similarity
+function similarity(s1, s2) {
+  if (s1 === s2) return 1;
+  let longer = s1.length > s2.length ? s1 : s2;
+  let shorter = s1.length > s2.length ? s2 : s1;
+  let longerLength = longer.length;
+  if (longerLength === 0) return 1.0;
+  return (longerLength - editDistance(longer, shorter)) / parseFloat(longerLength);
+}
+
+function editDistance(s1, s2) {
+  s1 = s1.toLowerCase();
+  s2 = s2.toLowerCase();
+  const costs = Array();
+  for (let i = 0; i <= s1.length; i++) {
+    let lastValue = i;
+    for (let j = 0; j <= s2.length; j++) {
+      if (i === 0)
+        costs[j] = j;
+      else {
+        if (j > 0) {
+          let newValue = costs[j - 1];
+          if (s1.charAt(i - 1) !== s2.charAt(j - 1))
+            newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
+          costs[j - 1] = lastValue;
+          lastValue = newValue;
+        }
+      }
+    }
+    if (i > 0) costs[s2.length] = lastValue;
+  }
+  return costs[s2.length];
+}
+</script>
+<script>
+  function listenForWakeWord() {
+    const recognition = new webkitSpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.start();
+
+    document.getElementById("login-status").innerText = "Listening...";
+
+    recognition.onresult = function (event) {
+      const spokenWord = event.results[0][0].transcript.trim().toLowerCase();
+      const userID = document.getElementById("email").value; // Same ID used during signup
+
+      db.collection("wakewords").doc(userID).get()
+        .then(doc => {
+          if (doc.exists) {
+            const savedWakeWord = doc.data().wakeword;
+            if (spokenWord === savedWakeWord) {
+              document.getElementById("login-status").innerText = "Wake word matched! Logging in...";
+              // Redirect or do login
+              setTimeout(() => {
+                window.location.href = "dashboard.html";
+              }, 1500);
+            } else {
+              document.getElementById("login-status").innerText = "Incorrect wake word.";
+            }
+          } else {
+            document.getElementById("login-status").innerText = "Wake word not found.";
+          }
+        })
+        .catch(err => {
+          console.error("Error fetching wake word:", err);
+          document.getElementById("login-status").innerText = "Login failed.";
+        });
+    };
+  }
+</script>
+
 </body>
 </html>

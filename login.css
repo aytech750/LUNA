@@ -104,3 +104,41 @@ button:hover {
 .note a:hover {
   text-decoration: underline;
 }
+.record-wakeword {
+  margin-top: 20px;
+  padding: 15px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  text-align: center;
+}
+
+.record-title {
+  font-size: 16px;
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+
+.record-btn {
+  padding: 10px 20px;
+  background: #1e90ff;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.mic-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.record-status {
+  margin-top: 8px;
+  font-size: 14px;
+  color: #f1c40f;
+}
