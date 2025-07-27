@@ -5,122 +5,40 @@ body {
   align-items: center;
   justify-content: center;
   height: 100vh;
-  background-color: #e0f0ff;
-  color: #849bb3;
+  background: linear-gradient(to bottom right, #0b4bab, #1641b8);
+  color: #ffffff;
+  animation: fadeIn 1.5s ease-in-out;
+  overflow: hidden;
 }
 
 .splash-container {
   text-align: center;
-  animation: fadeIn 1s ease-in-out;
-}
-
-.luna {
-  color: #f2f6f9;
-  font-weight: bold;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-body {
-  margin: 0;
-  font-family: 'Segoe UI', sans-serif;
-  background-color: #0b4bab;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
-}
-
-.container {
-  width: 100%;
-  max-width: 400px;
-  padding: 20px;
-}
-
-.login-box {
-  background: white;
-  padding: 30px;
-  border-radius: 12px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-  text-align: center;
-  animation: fadeIn 0.8s ease-in;
+  animation: zoomIn 1.2s ease;
 }
 
 .logo {
-  width: 80px;
-  margin-bottom: 10px;
-}
-
-.login-box h1 {
-  margin: 10px 0 5px;
-  color: #1641b8;
-}
-
-.login-box p {
+  width: 100px;
+  height: 100px;
+  animation: spinLogo 2s linear infinite;
   margin-bottom: 20px;
-  color: #666;
 }
 
-.login-box input {
-  width: 100%;
-  padding: 12px;
-  margin: 10px 0;
-  border: 1px solid #dbeafe;
-  border-radius: 8px;
-  font-size: 16px;
+.luna {
+  font-size: 2rem;
+  font-weight: bold;
+  letter-spacing: 2px;
+  color: #f2f6f9;
+  text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
 }
 
-.login-box button {
-  width: 100%;
-  padding: 12px;
-  background-color: #2563eb;
-  border: none;
-  border-radius: 8px;
-  color: white;
-  font-size: 16px;
-  cursor: pointer;
-  position: relative;
-  transition: background 0.3s ease, transform 0.2s;
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
 }
 
-.login-box button:hover {
-  background-color: #1d4ed8;
-  transform: translateY(-1px);
-}
-
-.voice-btn {
-  background-color: #1e40af;
-  margin-top: 10px;
-}
-
-.divider {
-  margin: 20px 0;
-  color: #888;
-}
-
-.signup-link {
-  margin-top: 15px;
-  font-size: 14px;
-}
-.signup-link a {
-  color: #2563eb;
-  text-decoration: none;
-}
-.signup-link a:hover {
-  text-decoration: underline;
-}
-.spinner-logo {
-  width: 20px;
-  height: 20px;
-  margin-left: 10px;
-  animation: spinLogo 1s linear infinite;
-  vertical-align: middle;
-}
-
-.hidden {
-  display: none;
+@keyframes zoomIn {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
 }
 
 @keyframes spinLogo {
