@@ -1,39 +1,63 @@
-body {
+/* Reset and base styling */
+* {
   margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body.splash-body {
+  height: 100vh;
+  width: 100%;
   font-family: 'Segoe UI', sans-serif;
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 100vh;
-  background: linear-gradient(to bottom right, #0b4bab, #1641b8);
-  color: #ffffff;
-  animation: fadeIn 1.5s ease-in-out;
+  background: linear-gradient(145deg, #0b4bab, #1d3bbd);
   overflow: hidden;
+  color: #ffffff;
+  animation: fadeInBody 1.5s ease-in-out;
 }
 
+/* Splash container styles */
 .splash-container {
   text-align: center;
-  animation: zoomIn 1.2s ease;
+  animation: zoomIn 1.2s ease-out;
 }
 
-.logo {
+/* Luna spinning logo */
+.splash-logo {
   width: 100px;
   height: 100px;
-  animation: spinLogo 2s linear infinite;
+  animation: spinLogo 4s linear infinite;
   margin-bottom: 20px;
 }
 
-.luna {
-  font-size: 2rem;
+/* Main title and subtitle */
+.splash-container h1 {
+  font-size: 2.2rem;
   font-weight: bold;
-  letter-spacing: 2px;
-  color: #f2f6f9;
-  text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+  animation: slideDown 1.4s ease forwards;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
+.splash-container h1 .luna {
+  color: #f0f8ff;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+}
+
+.splash-container p {
+  font-size: 1rem;
+  opacity: 0;
+  animation: fadeInText 2s ease forwards;
+  animation-delay: 1s;
+}
+
+/* Animations */
+@keyframes fadeInBody {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes zoomIn {
@@ -44,4 +68,29 @@ body {
 @keyframes spinLogo {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+@keyframes slideDown {
+  0% { transform: translateY(-20px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes fadeInText {
+  to { opacity: 1; }
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .splash-logo {
+    width: 80px;
+    height: 80px;
+  }
+
+  .splash-container h1 {
+    font-size: 1.8rem;
+  }
+
+  .splash-container p {
+    font-size: 0.95rem;
+  }
 }
