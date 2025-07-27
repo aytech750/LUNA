@@ -2,206 +2,211 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Luna - Sign Up</title>
   <link rel="stylesheet" href="signup.css" />
-  <style>
-    body, html {
-  margin: 0;
-  padding: 0;
-  font-family: 'Segoe UI', sans-serif;
-  height: 100%;
-  overflow-x: hidden;
-  color: #fff;
-}
-
-.gradient-bg {
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(-45deg, #234696, #5984e0, #064727, #05196f);
-  background-size: 400% 400%;
-  animation: gradientMove 10s ease infinite;
-  z-index: -1;
-}
-
-@keyframes gradientMove {
-  0% { background-position: 0% 50% }
-  50% { background-position: 100% 50% }
-  100% { background-position: 0% 50% }
-}
-
-.signup-container {
-  max-width: 400px;
-  margin: 60px auto;
-  background: rgba(255, 255, 255, 0.1);
-  padding: 30px;
-  border-radius: 15px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(12px);
-  text-align: center;
-}
-
-.logo {
-  width: 80px;
-  margin-bottom: 10px;
-  animation: spinLogo 4s linear infinite;
-}
-
-@keyframes spinLogo {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.signup-form input {
-  width: 100%;
-  padding: 12px;
-  margin: 12px 0;
-  border: none;
-  border-radius: 8px;
-  font-size: 16px;
-  background: rgba(255, 255, 255, 0.664);
-  color: #140a0a;
-  transition: background 0.3s;
-}
-.signup-form input:focus {
-  background: rgb(255, 255, 255);
-  outline: none;
-}
-
-.signup-form button {
-  width: 100%;
-  padding: 12px;
-  border: none;
-  background: #1d4ed8;
-  color: #fff;
-  font-size: 16px;
-  border-radius: 8px;
-  margin-top: 10px;
-  transition: 0.3s ease;
-  cursor: pointer;
-}
-.signup-form button:hover {
-  background: #2563eb;
-  transform: scale(1.02);
-}
-
-.note {
-  font-size: 14px;
-  margin-top: 15px;
-}
-.note a {
-  color: #070e43;
-  text-decoration: none;
-  font-size: 18px;
-    font-weight: bold;
-}
-.note a:hover {
-  text-decoration: underline;
-}
-
-.about-luna {
-  padding: 50px 20px;
-  text-align: center;
-  background: rgba(0, 0, 0, 0.2);
-  margin-top: 50px;
-  backdrop-filter: blur(10px);
-}
-.about-luna h2 {
-  font-size: 28px;
-  margin-bottom: 20px;
-}
-.luna {
-  color: #38bdf8;
-}
-
-.features {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 30px;
-  max-width: 800px;
-  margin: 0 auto;
-  text-align: left;
-}
-.features div {
-  background: rgba(252, 245, 245, 0.05);
-  padding: 20px;
-  border-radius: 10px;
-}
-
-.connect {
-  margin-top: 30px;
-}
-.connect p {
-  font-size: 16px;
-  margin-bottom: 10px;
-}
-.connect a img {
-  width: 40px;
-  margin: 0 10px;
-  transition: transform 0.3s ease;
-}
-.connect a img:hover {
-  transform: scale(1.1);
-}
-
-.credits {
-  margin-top: 20px;
-  font-size: 14px;
-  color: #ccc;
-}
-
-  </style>
+  <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-firestore.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
 </head>
-<body>
-  <div class="gradient-bg"></div>
+<body class="signup-body">
 
-  <div class="signup-container">
-    <img src="https://i.imgur.com/8KlT8jJ.png" alt="Luna Logo" class="logo">
+  <div class="form-container">
+    <img src="https://i.imgur.com/8KlT8jJ.png" alt="Luna Logo" class="logo" />
     <h1>Create Your Luna Account</h1>
-    <form class="signup-form">
-      <input type="text" placeholder="Full Name" required>
-      <input type="email" placeholder="Email Address" required>
-      <input type="password" placeholder="Create Password" required>
+    <form id="signupForm">
+      <input type="text" id="name" placeholder="Full Name" required />
+      <input type="email" id="email" placeholder="Email" required />
+      <input type="password" id="password" placeholder="Password" required />
+      <div class="record-wakeword">
+  <p class="record-title">Record Your Wake Word</p>
+  <button type="button" class="record-btn" onclick="startRecording()">
+    <img src="https://cdn-icons-png.flaticon.com/512/727/727245.png" alt="Mic" class="mic-icon">
+    <span>Start Recording</span>
+  </button>
+  <p class="record-status" id="record-status">Not recording</p>
+</div>
+
       <button type="submit">Sign Up</button>
-      <p class="note">Already have an account? <a href="login.html">Login</a></p>
     </form>
+
+    <div id="spinnerOverlay" class="spinner-overlay">
+      <img src="https://i.imgur.com/8KlT8jJ.png" alt="Luna Spinner" class="spinner-logo" />
+    </div>
+
+    <p class="login-link">Already have an account? <a href="login.html">Login</a></p>
+  </div>
+  <section class="about-luna">
+  <h2>Why Choose <span class="luna">Luna</span>?</h2>
+  <div class="features">
+    <div>
+      <h3>🌟 Our Mission</h3>
+      <p>To revolutionize the way people connect with technology using voice-driven AI experiences that are simple, secure, and smart.</p>
+    </div>
+    <div>
+      <h3>🚀 Our Innovation</h3>
+      <p>Luna combines the power of AI, voice recognition, and personalized assistance, offering a smarter way to interact with your world.</p>
+    </div>
+    <div>
+      <h3>🤝 Why Luna?</h3>
+      <p>Unlike other platforms, Luna is designed to be intuitive, friendly, and accessible, serving as your social and smart assistant.</p>
+    </div>
+    <div>
+     <h3>💼 About LunaAI</h3>
+<p style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 16px; line-height: 1.6;">
+  <img src="https://img.icons8.com/color/48/artificial-intelligence.png" alt="AI Icon" style="width: 24px; height: 24px;" />
+  <span style="flex: 1;">
+    <strong>LunaAI</strong> is an innovative voice assistant developed by <strong>AyTech</strong>—a rising tech firm known for simplifying complex problems through smart solutions. <br />
+    Other products by AyTech include <em>Freenium Data</em>, <em>Osun Ride</em>, and more.
+  </span>
+  <img src="https://img.icons8.com/fluency/48/source-code.png" alt="Tech Code Icon" style="width: 24px; height: 24px;" />
+  <img src="https://img.icons8.com/color/48/voice-recognition.png" alt="Voice Recognition Icon" style="width: 24px; height: 24px;" />
+</p>
+
+
+    </div>
   </div>
 
-  <section class="about-luna">
-    <h2>Why Choose <span class="luna">Luna</span>?</h2>
-    <p>Luna is the smartest voice AI social media assistant designed to keep you connected hands-free.</p>
+  <div class="connect">
+    <p>Connect with us:</p>
+    <a href="https://wa.me/your_number" target="_blank">
+      <img src="https://img.icons8.com/color/48/000000/whatsapp--v1.png" alt="WhatsApp" />
+    </a>
+    <a href="https://instagram.com/your_handle" target="_blank">
+      <img src="https://img.icons8.com/fluency/48/instagram-new.png" alt="Instagram" />
+    </a>
+    <a href="https://tiktok.com/@your_handle" target="_blank">
+      <img src="https://img.icons8.com/color/48/tiktok--v1.png" alt="TikTok" />
+    </a>
+  </div>
 
-    <div class="features">
-      <div>
-        <h3>Our Mission</h3>
-        <p>To redefine how humans interact with technology using seamless voice experiences.</p>
-      </div>
-      <div>
-        <h3>Our Vision</h3>
-        <p>To become the world’s most intuitive voice-based AI platform.</p>
-      </div>
-      <div>
-        <h3>Innovation</h3>
-        <p>Luna blends real-time voice processing, smart replies, and cross-platform social integration.</p>
-      </div>
-    </div>
+  <div class="credits">
+    <p>&copy; 2025 Luna AI - Created by AyTech</p>
+  </div>
+</section>
+  <!-- About section skipped for brevity -->
 
-    <div class="connect">
-      <p>Connect with us:</p>
-      <a href="https://wa.me/2340000000000" target="_blank">
-        <img src="https://img.icons8.com/color/48/000000/whatsapp--v1.png" alt="WhatsApp">
-      </a>
-      <a href="https://instagram.com/luna_ai" target="_blank">
-        <img src="https://img.icons8.com/color/48/000000/instagram-new--v1.png" alt="Instagram">
-      </a>
-      <a href="https://www.tiktok.com/@luna_ai" target="_blank">
-        <img src="https://img.icons8.com/color/48/000000/tiktok--v1.png" alt="TikTok">
-      </a>
-    </div>
-    
-    <p class="credits">Built by <strong>AYTECH</strong></p>
-  </section>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDN4hgEwEZkL0gzEmlRWlabjAEt6fY3c88",
+      authDomain: "luna-app-a3c50.firebaseapp.com",
+      projectId: "luna-app-a3c50",
+      storageBucket: "luna-app-a3c50.appspot.com",
+      messagingSenderId: "683159311462",
+      appId: "1:683159311462:web:2bef289d271172267d49a7"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    let mediaRecorder;
+    let wakeWordBlob;
+
+    async function startRecording() {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder = new MediaRecorder(stream);
+      const audioChunks = [];
+
+      mediaRecorder.ondataavailable = event => {
+        audioChunks.push(event.data);
+      };
+
+      mediaRecorder.onstop = () => {
+        wakeWordBlob = new Blob(audioChunks, { type: 'audio/webm' });
+        document.getElementById("wakewordPreview").src = URL.createObjectURL(wakeWordBlob);
+      };
+
+      mediaRecorder.start();
+    }
+
+    function stopRecording() {
+      if (mediaRecorder && mediaRecorder.state !== "inactive") {
+        mediaRecorder.stop();
+      }
+    }
+
+    const form = document.getElementById("signupForm");
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      document.getElementById("spinnerOverlay").style.display = "flex";
+      const name = document.getElementById("name").value;
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+
+      const btn = form.querySelector("button[type='submit']");
+      btn.disabled = true;
+      btn.textContent = "Creating account...";
+
+      try {
+        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+        const uid = userCredential.user.uid;
+
+        // Save user data
+        await db.collection("users").doc(uid).set({
+          name,
+          email,
+          createdAt: new Date()
+        });
+
+        // Upload wake word if recorded
+        if (wakeWordBlob) {
+          const storageRef = firebase.storage().ref();
+          const audioRef = storageRef.child(`wakewords/${uid}.webm`);
+          await audioRef.put(wakeWordBlob);
+        }
+
+        localStorage.setItem("lunaUser", name);
+        greetUser(name);
+
+        Toastify({
+          text: `Welcome, ${name}!`,
+          duration: 3000,
+          close: true,
+          gravity: "top",
+          position: "right",
+          backgroundColor: "#2563eb",
+        }).showToast();
+
+        setTimeout(() => {
+          window.location.href = "dashboard.html";
+        }, 3500);
+
+      } catch (error) {
+        Toastify({
+          text: error.message,
+          duration: 3000,
+          close: true,
+          gravity: "top",
+          position: "right",
+          backgroundColor: "#d32f2f",
+        }).showToast();
+
+        btn.disabled = false;
+        btn.textContent = "Sign Up";
+        document.getElementById("spinnerOverlay").style.display = "none";
+      }
+    });
+
+    function greetUser(name) {
+      const greeting = `Welcome, ${name}. Luna is happy to meet you!`;
+      const utterance = new SpeechSynthesisUtterance(greeting);
+      const voices = speechSynthesis.getVoices();
+      const femaleVoice = voices.find(v => v.name.includes("Google") || v.name.toLowerCase().includes("female"));
+      if (femaleVoice) utterance.voice = femaleVoice;
+      speechSynthesis.speak(utterance);
+    }
+  function startRecording() {
+    const statusText = document.getElementById("record-status");
+    statusText.textContent = "Recording... Please say your wake word";
+    // Placeholder: Add real recording logic here using MediaRecorder or WebSpeech API
+    setTimeout(() => {
+      statusText.textContent = "Wake word recorded successfully!";
+    }, 4000);
+  }
+
+  </script>
 </body>
 </html>

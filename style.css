@@ -1,4 +1,3 @@
-/* Reset and base styling */
 * {
   margin: 0;
   padding: 0;
@@ -6,91 +5,102 @@
 }
 
 body.splash-body {
+  background: radial-gradient(circle, #0f2027, #203a43, #2c5364);
+  font-family: 'Orbitron', sans-serif;
+  color: white;
   height: 100vh;
-  width: 100%;
-  font-family: 'Segoe UI', sans-serif;
   display: flex;
-  align-items: center;
   justify-content: center;
-  background: linear-gradient(145deg, #0b4bab, #1d3bbd);
+  align-items: center;
   overflow: hidden;
-  color: #ffffff;
-  animation: fadeInBody 1.5s ease-in-out;
 }
 
-/* Splash container styles */
 .splash-container {
   text-align: center;
-  animation: zoomIn 1.2s ease-out;
+  animation: fadeInZoom 1.5s ease-out;
 }
 
-/* Luna spinning logo */
 .splash-logo {
-  width: 100px;
-  height: 100px;
-  animation: spinLogo 4s linear infinite;
+  width: 130px;
+  margin-bottom: 30px;
+  filter: drop-shadow(0 0 15px #00f0ff);
+  animation: pulse 3s infinite;
+}
+
+h1 {
+  font-size: 2rem;
+  margin-bottom: 10px;
+  animation: slideUp 1.2s ease-out;
+}
+
+h1 .luna {
+  color: #00f0ff;
+  text-shadow: 0 0 5px #00f0ff;
+}
+
+p {
+  font-size: 1rem;
+  opacity: 0.85;
   margin-bottom: 20px;
 }
 
-/* Main title and subtitle */
-.splash-container h1 {
-  font-size: 2.2rem;
-  font-weight: bold;
-  color: #ffffff;
-  letter-spacing: 1px;
-  margin-bottom: 10px;
-  animation: slideDown 1.4s ease forwards;
+.loading-dots {
+  font-size: 2rem;
+  letter-spacing: 5px;
+  color: #00f0ff;
+  animation: fadeIn 2s forwards;
 }
 
-.splash-container h1 .luna {
-  color: #f0f8ff;
-  text-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
-}
-
-.splash-container p {
-  font-size: 1rem;
+/* Animation Classes */
+.fade-in {
   opacity: 0;
-  animation: fadeInText 2s ease forwards;
+  animation: fadeIn 1.5s forwards;
+}
+
+.slide-up {
+  animation: slideUp 1.2s ease-out forwards;
+}
+
+.delay-1 {
   animation-delay: 1s;
 }
 
-/* Animations */
-@keyframes fadeInBody {
-  from { opacity: 0; }
+.delay-2 {
+  animation-delay: 2s;
+}
+
+.animate-logo {
+  animation: fadeInZoom 1.5s ease-out;
+}
+
+/* Keyframes */
+@keyframes fadeIn {
   to { opacity: 1; }
 }
 
-@keyframes zoomIn {
-  from { transform: scale(0.9); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
-}
-
-@keyframes spinLogo {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-@keyframes slideDown {
-  0% { transform: translateY(-20px); opacity: 0; }
+@keyframes slideUp {
+  0% { transform: translateY(30px); opacity: 0; }
   100% { transform: translateY(0); opacity: 1; }
 }
 
-@keyframes fadeInText {
-  to { opacity: 1; }
+@keyframes fadeInZoom {
+  0% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
-/* Responsive */
-@media (max-width: 600px) {
-  .splash-logo {
-    width: 80px;
-    height: 80px;
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 10px #00f0ff);
   }
-
-  .splash-container h1 {
-    font-size: 1.8rem;
-  }
-
-  .splash-container p {
-    font-size: 0.95rem;
+  50% {
+    transform: scale(1.05);
+    filter: drop-shadow(0 0 20px #00f0ff);
   }
 }

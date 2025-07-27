@@ -5,205 +5,168 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Luna - Voice Login</title>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap" rel="stylesheet">
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Orbitron', sans-serif;
-    }
-
-    body, html {
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(to bottom right, #0f0c29, #302b63, #24243e);
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      color: white;
-    }
-
-    .logo {
-      width: 80px;
-      height: 80px;
-      margin-bottom: 20px;
-      animation: spin 2s linear infinite;
-    }
-
-    @keyframes spin {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
-
-    h1 {
-      font-size: 1.8rem;
-      margin-bottom: 10px;
-    }
-
-    form {
-      width: 90%;
-      max-width: 400px;
-      background: rgba(255, 255, 255, 0.05);
-      padding: 20px;
-      border-radius: 15px;
-      box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
-      display: flex;
-      flex-direction: column;
-    }
-
-    input {
-      margin-bottom: 15px;
-      padding: 12px;
-      border: none;
-      border-radius: 8px;
-      font-size: 1rem;
-      background: rgba(255, 255, 255, 0.2);
-      color: white;
-    }
-
-    input::placeholder {
-      color: #ccc;
-    }
-
-    .voice-btn {
-      margin-bottom: 10px;
-      padding: 10px;
-      border: none;
-      border-radius: 8px;
-      background: #ff4d4d;
-      color: #fff;
-      font-size: 1rem;
-      font-weight: bold;
-      cursor: pointer;
-      transition: background 0.3s ease;
-    }
-
-    .voice-btn:hover {
-      background: #cc0000;
-    }
-
-    button[type="submit"] {
-      padding: 12px;
-      border: none;
-      border-radius: 8px;
-      background: #00d2ff;
-      color: #fff;
-      font-size: 1.1rem;
-      font-weight: bold;
-      cursor: pointer;
-      transition: background 0.3s ease;
-      animation: pulse 2s infinite;
-    }
-
-    button[type="submit"]:hover {
-      background: #3a7bd5;
-    }
-   
-
-    @keyframes pulse {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.05); }
-      100% { transform: scale(1); }
-    }
-.note {
-  text-align: center;
-  font-size: 14px;
-  color: #faf7f7;
-  margin-top: 20px;
-  font-family: 'Segoe UI', sans-serif;
-}
-
-.note a {
-  color: #91adea;
-  font-weight: 600;
-  margin-left: 5px;
-  text-decoration: none;
-  position: relative;
-  transition: color 0.3s ease;
-}
-
-.note a::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  bottom: -2px;
-  width: 100%;
-  height: 2px;
-  background-color: #dde1e9;
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform 0.3s ease;
-}
-
-.note a:hover {
-  color: #e4e5e8;
-}
-
-.note a:hover::after {
-  transform: scaleX(1);
-}
-p {
-      font-family:Georgia, 'Times New Roman', Times, serif;
-      font-style: bold;
-      font-size: 20px;
-    }
-   
-  </style>
+  <link rel="stylesheet" href="login.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
 </head>
 <body>
+
+  <div id="spinnerOverlay" class="spinner-overlay">
+    <img src="https://i.imgur.com/8KlT8jJ.png" alt="Luna Spinner" class="spinner-logo" />
+  </div>
 
   <img src="https://i.imgur.com/8KlT8jJ.png" alt="Luna Logo" class="logo" />
   <h1>Welcome back</h1>
   <p>LUNA</p>
 
-  <form>
+  <form id="loginForm">
     <input type="email" id="email" placeholder="Enter your email" required />
     <input type="password" id="password" placeholder="Enter your password" required />
 
     <button type="button" class="voice-btn" onclick="startVoiceLogin()">🎙 Voice Login</button>
-   <button type="submit">login</button>
-  <p class="note">
-  Don't have an account yet?
-  <a href="signup.html">Sign up</a>
-</p>
+    <button type="submit">Login</button>
 
-  <form>
+    <p class="note">
+      Don't have an account yet?
+      <a href="signup.html">Sign up</a>
+    </p>
+  </form>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+
+  <!-- Firebase Config -->
   <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDN4hgEwEZkL0gzEmlRWlabjAEt6fY3c88",
+      authDomain: "luna-app-a3c50.firebaseapp.com",
+      projectId: "luna-app-a3c50",
+      storageBucket: "luna-app-a3c50.appspot.com",
+      messagingSenderId: "683159311462",
+      appId: "1:683159311462:web:2bef289d271172267d49a7"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+  </script>
+
+  <!-- Login & Voice Logic -->
+  <script>
+    const spinner = document.getElementById("spinnerOverlay");
+
+    document.getElementById('loginForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      spinner.style.display = "flex";
+
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+
+      auth.signInWithEmailAndPassword(email, password)
+        .then((userCredential) => {
+          Toastify({
+            text: "Login successful!",
+            duration: 3000,
+            close: true,
+            gravity: "top",
+            position: "right",
+            backgroundColor: "#00b09b",
+          }).showToast();
+
+          setTimeout(() => {
+            window.location.href = "dashboard.html";
+          }, 2000);
+        })
+        .catch((error) => {
+          spinner.style.display = "none";
+          Toastify({
+            text: "Login failed: " + error.message,
+            duration: 3000,
+            close: true,
+            gravity: "top",
+            position: "right",
+            backgroundColor: "#d32f2f",
+          }).showToast();
+        });
+    });
+
     function startVoiceLogin() {
       if (!('webkitSpeechRecognition' in window)) {
-        alert('Your browser does not support voice recognition.');
+        Toastify({
+          text: "Voice recognition not supported.",
+          duration: 3000,
+          backgroundColor: "#ff6f00",
+        }).showToast();
         return;
       }
+
+      spinner.style.display = "flex";
 
       const recognition = new webkitSpeechRecognition();
       recognition.continuous = false;
       recognition.interimResults = false;
       recognition.lang = 'en-US';
 
-      alert("Speak your email and password. Pause after each.");
+      let inputStep = 0;
 
-      let inputStep = 0; // 0 = email, 1 = password
+      Toastify({
+        text: "Speak email, then password",
+        duration: 3000,
+        backgroundColor: "#0066ff",
+      }).showToast();
 
-      recognition.onresult = function(event) {
+      recognition.onresult = function (event) {
         const transcript = event.results[0][0].transcript.trim();
 
         if (inputStep === 0) {
           document.getElementById("email").value = transcript.replace(/\s+/g, "").toLowerCase();
           inputStep = 1;
-          recognition.start(); // ask again for password
+          recognition.start(); // Listen again for password
         } else if (inputStep === 1) {
           document.getElementById("password").value = transcript.replace(/\s+/g, "");
+          document.getElementById('loginForm').dispatchEvent(new Event('submit'));
         }
       };
 
-      recognition.onerror = function(event) {
-        alert("Voice recognition error: " + event.error);
+      recognition.onerror = function (event) {
+        spinner.style.display = "none";
+        Toastify({
+          text: "Voice recognition error: " + event.error,
+          duration: 3000,
+          backgroundColor: "#d32f2f",
+        }).showToast();
       };
 
       recognition.start();
     }
   </script>
 
+  <!-- Spinner CSS -->
+  <style>
+    .spinner-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(10, 10, 10, 0.85);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+
+    .spinner-logo {
+      width: 100px;
+      height: 100px;
+      animation: spin 1.5s linear infinite;
+      filter: drop-shadow(0 0 15px #00f6ff);
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
 </body>
 </html>
