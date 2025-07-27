@@ -2,45 +2,167 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Luna - Login</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Luna - Voice Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Orbitron', sans-serif;
+    }
+
+    body, html {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(to bottom right, #0f0c29, #302b63, #24243e);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      color: white;
+    }
+
+    .logo {
+      width: 80px;
+      height: 80px;
+      margin-bottom: 20px;
+      animation: spin 2s linear infinite;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      margin-bottom: 10px;
+    }
+
+    form {
+      width: 90%;
+      max-width: 400px;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+      display: flex;
+      flex-direction: column;
+    }
+
+    input {
+      margin-bottom: 15px;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+    }
+
+    input::placeholder {
+      color: #ccc;
+    }
+
+    .voice-btn {
+      margin-bottom: 10px;
+      padding: 10px;
+      border: none;
+      border-radius: 8px;
+      background: #ff4d4d;
+      color: #fff;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    .voice-btn:hover {
+      background: #cc0000;
+    }
+
+    button[type="submit"] {
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      background: #00d2ff;
+      color: #fff;
+      font-size: 1.1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.3s ease;
+      animation: pulse 2s infinite;
+    }
+
+    button[type="submit"]:hover {
+      background: #3a7bd5;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+
+    .note {
+      margin-top: 10px;
+      font-size: 0.9rem;
+      text-align: center;
+      color: #ccc;
+    }
+  </style>
 </head>
 <body>
-  <div class="container">
-    <div class="login-box">
-      <img src="https://i.imgur.com/8KlT8jJ.png" alt="Luna Logo" class="logo" />
-      <h1>Luna</h1>
-      <p>Your Personal Voice AI Assistant</p>
 
-      <form id="loginForm">
-        <input type="email" id="email" placeholder="Email Address" required />
-        <input type="password" id="password" placeholder="Password" required />
-       <!-- Inside the <form> -->
-<button type="submit" id="loginBtn">
-  <span class="btn-text">Login</span>
-  <img src="https://i.imgur.com/8KlT8jJ.png" class="spinner-logo hidden" alt="Loading" />
-</button>
+  <img src="https://i.imgur.com/8KlT8jJ.png" alt="Luna Logo" class="logo" />
+  <h1>Luna Login</h1>
 
-<script>
-  const form = document.getElementById('loginForm');
-  const loginBtn = document.getElementById('loginBtn');
-  const spinnerLogo = loginBtn.querySelector('.spinner-logo');
-  const btnText = loginBtn.querySelector('.btn-text');
+  <form>
+    <input type="email" id="email" placeholder="Enter your email" required />
+    <input type="password" id="password" placeholder="Enter your password" required />
 
-  form.addEventListener('submit', function (e) {
-    e.preventDefault();
-    btnText.textContent = 'Logging in...';
-    spinnerLogo.classList.remove('hidden');
-    loginBtn.disabled = true;
+    <button type="button" class="voice-btn" onclick="startVoiceLogin()">🎙 Voice Login</button>
+    <button type="submit">Login</button>
+    <p class="note">Don’t have an account? Sign up</p>
+  </form>
 
-    setTimeout(() => {
-      alert('Login successful (simulate)');
-      btnText.textContent = 'Login';
-      spinnerLogo.classList.add('hidden');
-      loginBtn.disabled = false;
-    }, 2000);
-  });
-</script>
+  <script>
+    function startVoiceLogin() {
+      if (!('webkitSpeechRecognition' in window)) {
+        alert('Your browser does not support voice recognition.');
+        return;
+      }
+
+      const recognition = new webkitSpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = 'en-US';
+
+      alert("Speak your email and password. Pause after each.");
+
+      let inputStep = 0; // 0 = email, 1 = password
+
+      recognition.onresult = function(event) {
+        const transcript = event.results[0][0].transcript.trim();
+
+        if (inputStep === 0) {
+          document.getElementById("email").value = transcript.replace(/\s+/g, "").toLowerCase();
+          inputStep = 1;
+          recognition.start(); // ask again for password
+        } else if (inputStep === 1) {
+          document.getElementById("password").value = transcript.replace(/\s+/g, "");
+        }
+      };
+
+      recognition.onerror = function(event) {
+        alert("Voice recognition error: " + event.error);
+      };
+
+      recognition.start();
+    }
+  </script>
+
 </body>
 </html>

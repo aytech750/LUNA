@@ -6,7 +6,7 @@ body {
   justify-content: center;
   height: 100vh;
   background-color: #e0f0ff;
-  color: #003366;
+  color: #849bb3;
 }
 
 .splash-container {
@@ -15,7 +15,7 @@ body {
 }
 
 .luna {
-  color: #007bff;
+  color: #f2f6f9;
   font-weight: bold;
 }
 
@@ -26,7 +26,7 @@ body {
 body {
   margin: 0;
   font-family: 'Segoe UI', sans-serif;
-  background-color: #f0f6ff;
+  background-color: #0b4bab;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -55,7 +55,8 @@ body {
 
 .login-box h1 {
   margin: 10px 0 5px;
-  color: #1e3a8a;
+  color: #1641b8;
+  font-family:  ;
 }
 
 .login-box p {
