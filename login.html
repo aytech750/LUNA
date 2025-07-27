@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Luna - Login</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="login-box">
+      <img src="https://i.imgur.com/8KlT8jJ.png" alt="Luna Logo" class="logo" />
+      <h1>Luna</h1>
+      <p>Your Personal Voice AI Assistant</p>
+
+      <form id="loginForm">
+        <input type="email" id="email" placeholder="Email Address" required />
+        <input type="password" id="password" placeholder="Password" required />
+       <!-- Inside the <form> -->
+<button type="submit" id="loginBtn">
+  <span class="btn-text">Login</span>
+  <img src="https://i.imgur.com/8KlT8jJ.png" class="spinner-logo hidden" alt="Loading" />
+</button>
+
+<script>
+  const form = document.getElementById('loginForm');
+  const loginBtn = document.getElementById('loginBtn');
+  const spinnerLogo = loginBtn.querySelector('.spinner-logo');
+  const btnText = loginBtn.querySelector('.btn-text');
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    btnText.textContent = 'Logging in...';
+    spinnerLogo.classList.remove('hidden');
+    loginBtn.disabled = true;
+
+    setTimeout(() => {
+      alert('Login successful (simulate)');
+      btnText.textContent = 'Login';
+      spinnerLogo.classList.add('hidden');
+      loginBtn.disabled = false;
+    }, 2000);
+  });
+</script>
+</body>
+</html>
