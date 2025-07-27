@@ -10,35 +10,41 @@
   <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-firestore.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-storage.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css" />
 </head>
-<body class="signup-body">
 
+<body class="signup-body">
   <div class="form-container">
     <img src="https://i.imgur.com/8KlT8jJ.png" alt="Luna Logo" class="logo" />
     <h1>Create Your Luna Account</h1>
+
     <form id="signupForm">
       <input type="text" id="name" placeholder="Full Name" required />
       <input type="email" id="email" placeholder="Email" required />
       <input type="password" id="password" placeholder="Password" required />
+
       <div class="record-wakeword">
         <p class="record-title">Record Your Wake Word</p>
-       <!-- Replace this button onclick -->
-<button type="button" class="record-btn" onclick="handleWakeWordRecording()">
-
+        <button type="button" class="record-btn" onclick="handleWakeWordRecording()">
           <img src="https://cdn-icons-png.flaticon.com/512/727/727245.png" alt="Mic" class="mic-icon">
           <span>Start Recording</span>
         </button>
         <p class="record-status" id="record-status">Not recording</p>
       </div>
+
       <button type="submit">Sign Up</button>
     </form>
-    <div id="spinnerOverlay" class="spinner-overlay">
+
+    <div id="spinnerOverlay" class="spinner-overlay" style="display:none;">
       <img src="https://i.imgur.com/8KlT8jJ.png" alt="Luna Spinner" class="spinner-logo" />
     </div>
 
     <p class="login-link">Already have an account? <a href="login.html">Login</a></p>
   </div>
+
+     <div id="spinnerOverlay" class="spinner-overlay">
+      <img src="https://i.imgur.com/8KlT8jJ.png" alt="Luna Spinner" class="spinner-logo" />
+    </div>
   <section class="about-luna">
   <h2>Why Choose <span class="luna">Luna</span>?</h2>
   <div class="features">
@@ -87,149 +93,186 @@
     <p>&copy; 2025 Luna AI - Created by AyTech</p>
   </div>
 </section>
-  </div>
-
   <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyDN4hgEwEZkL0gzEmlRWlabjAEt6fY3c88",
-      authDomain: "luna-app-a3c50.firebaseapp.com",
-      projectId: "luna-app-a3c50",
-      storageBucket: "luna-app-a3c50.appspot.com",
-      messagingSenderId: "683159311462",
-      appId: "1:683159311462:web:2bef289d271172267d49a7"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-    const storage = firebase.storage();
-    let mediaRecorder;
-let wakeWordBlob;
-let recordedWakeWord = "";
+  // Firebase config (unchanged)
+  const firebaseConfig = {
+    apiKey: "AIzaSyDN4hgEwEZkL0gzEmlRWlabjAEt6fY3c88",
+    authDomain: "luna-app-a3c50.firebaseapp.com",
+    projectId: "luna-app-a3c50",
+    storageBucket: "luna-app-a3c50.appspot.com",
+    messagingSenderId: "683159311462",
+    appId: "1:683159311462:web:2bef289d271172267d49a7"
+  };
+  firebase.initializeApp(firebaseConfig);
+
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+  const storage = firebase.storage();
+
+  let mediaRecorder;
+  let wakeWordBlob;
+  let recordedWakeWord = "";
+  let audioChunks = [];
+  let recognition;
+  let stream;
 
   async function handleWakeWordRecording() {
-  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-  mediaRecorder = new MediaRecorder(stream);
-  const audioChunks = [];
+    const status = document.getElementById("record-status");
+    const email = document.getElementById("email").value.trim();
 
-  const status = document.getElementById("record-status");
-  status.textContent = "Recording... Please say your wake word";
-
-  // Voice recognition setup
-  const recognition = new webkitSpeechRecognition();
-  recognition.lang = 'en-US';
-  recognition.start();
-
-  recognition.onresult = function (event) {
-    recordedWakeWord = event.results[0][0].transcript.trim().toLowerCase();
-    status.textContent = `Recognized: "${recordedWakeWord}"`;
-
-    const email = document.getElementById("email").value;
-    db.collection("wakewords").doc(email).set({
-      wakeword: recordedWakeWord
-    }).then(() => {
-      Toastify({
-        text: "Wake word saved.",
-        duration: 3000,
-        gravity: "top",
-        position: "right",
-        backgroundColor: "#4caf50",
-      }).showToast();
-    }).catch(err => {
-      Toastify({
-        text: "Error saving wake word: " + err.message,
-        duration: 3000,
-        gravity: "top",
-        position: "right",
-        backgroundColor: "#d32f2f",
-      }).showToast();
-    });
-  };
-
-  mediaRecorder.ondataavailable = event => {
-    audioChunks.push(event.data);
-  };
-
-  mediaRecorder.onstop = () => {
-    wakeWordBlob = new Blob(audioChunks, { type: 'audio/webm' });
-  };
-
-  mediaRecorder.start();
-
-  setTimeout(() => {
-    mediaRecorder.stop();
-    recognition.stop();
-  }, 4000);
-}
-
-
-    const form = document.getElementById("signupForm");
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-
-      const name = document.getElementById("name").value;
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-
-      const btn = form.querySelector("button[type='submit']");
-      btn.disabled = true;
-      btn.textContent = "Creating account...";
-       document.getElementById("spinnerOverlay").style.display = "flex";
-       
-      try {
-        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-        const uid = userCredential.user.uid;
-
-        await db.collection("users").doc(uid).set({
-          name,
-          email,
-          createdAt: new Date()
-        });
-
-        if (wakeWordBlob) {
-          const audioRef = storage.ref().child(`wakewords/${uid}.webm`);
-          await audioRef.put(wakeWordBlob);
-        }
-
-        localStorage.setItem("lunaUser", name);
-        greetUser(name);
-
-        Toastify({
-          text: `Welcome, ${name}!`,
-          duration: 3000,
-          close: true,
-          gravity: "top",
-          position: "right",
-          backgroundColor: "#2563eb",
-        }).showToast();
-
-        setTimeout(() => {
-            document.getElementById("spinnerOverlay").style.display = "none";
-          window.location.href = "dashboard.html";
-        }, 3500);
-
-      } catch (error) {
-        Toastify({
-          text: error.message,
-          duration: 3000,
-          close: true,
-          gravity: "top",
-          position: "right",
-          backgroundColor: "#d32f2f",
-        }).showToast();
-
-        btn.disabled = false;
-        btn.textContent = "Sign Up";
-      }
-    });
-
-    function greetUser(name) {
-      const greeting = `Welcome, ${name}. Luna is happy to meet you!`;
-      const utterance = new SpeechSynthesisUtterance(greeting);
-      const voices = speechSynthesis.getVoices();
-      const femaleVoice = voices.find(v => v.name.includes("Google") || v.name.toLowerCase().includes("female"));
-      if (femaleVoice) utterance.voice = femaleVoice;
-      speechSynthesis.speak(utterance);
+    if (!email) {
+      Toastify({ text: "Please enter your email first", duration: 3000, backgroundColor: "#ffa000" }).showToast();
+      return;
     }
-  </script>
+
+    if (mediaRecorder && mediaRecorder.state === "recording") {
+      stopRecording();
+      return;
+    }
+
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder = new MediaRecorder(stream);
+      audioChunks = [];
+
+      mediaRecorder.ondataavailable = (event) => audioChunks.push(event.data);
+      mediaRecorder.onstop = async () => {
+        wakeWordBlob = new Blob(audioChunks, { type: 'audio/webm' });
+
+        // Upload audio to Firebase
+        const audioRef = storage.ref().child(`wakewords/${email}_wakeword.webm`);
+        try {
+          await audioRef.put(wakeWordBlob);
+        } catch (e) {
+          Toastify({ text: "Audio upload failed", duration: 3000, backgroundColor: "#e53935" }).showToast();
+        }
+      };
+
+      recognition = new webkitSpeechRecognition();
+      recognition.lang = "en-US";
+      recognition.interimResults = false;
+
+      recognition.onstart = () => {
+        status.textContent = "Recording... Please say your wake word";
+      };
+
+      recognition.onresult = async (event) => {
+        recordedWakeWord = event.results[0][0].transcript.trim().toLowerCase();
+        status.textContent = `Recognized: "${recordedWakeWord}"`;
+
+        // Save transcript to Firestore
+        try {
+          await db.collection("wakewords").doc(email).set({ wakeword: recordedWakeWord });
+          Toastify({ text: "Wake word saved", duration: 3000, backgroundColor: "#4caf50" }).showToast();
+        } catch (err) {
+          Toastify({ text: "Error saving wakeword: " + err.message, duration: 3000, backgroundColor: "#e53935" }).showToast();
+        }
+      };
+
+      recognition.onerror = (e) => {
+        status.textContent = "Speech recognition failed";
+        console.error("Recognition error", e);
+      };
+
+      recognition.onend = () => {
+        status.textContent += " (Recording ended)";
+      };
+
+      recognition.start();
+      mediaRecorder.start();
+
+      // Automatically stop after 5 seconds
+      setTimeout(() => {
+        stopRecording();
+      }, 5000);
+
+    } catch (error) {
+      Toastify({ text: "Mic permission error: " + error.message, duration: 3000, backgroundColor: "#d32f2f" }).showToast();
+    }
+  }
+
+  function stopRecording() {
+    if (mediaRecorder && mediaRecorder.state === "recording") {
+      mediaRecorder.stop();
+    }
+    if (recognition) {
+      recognition.stop();
+    }
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+    }
+
+    document.getElementById("record-status").textContent = "Recording stopped";
+  }
+
+  const form = document.getElementById("signupForm");
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const name = document.getElementById("name").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+    const spinner = document.getElementById("spinnerOverlay");
+    const btn = form.querySelector("button[type='submit']");
+
+    if (!recordedWakeWord || !wakeWordBlob) {
+      Toastify({ text: "Please record your wake word before signing up.", duration: 3000, backgroundColor: "#ffa000" }).showToast();
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = "Signing up...";
+    spinner.style.display = "flex";
+
+    try {
+      const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+      const uid = userCredential.user.uid;
+
+      await db.collection("users").doc(uid).set({
+        name,
+        email,
+        createdAt: new Date()
+      });
+
+      const audioRef = storage.ref().child(`wakewords/${uid}.webm`);
+      await audioRef.put(wakeWordBlob);
+
+      localStorage.setItem("lunaUser", name);
+      greetUser(name);
+
+      Toastify({ text: `Welcome, ${name}!`, duration: 3000, backgroundColor: "#2563eb" }).showToast();
+
+      setTimeout(() => {
+        spinner.style.display = "none";
+        window.location.href = "dashboard.html";
+      }, 3000);
+    } catch (error) {
+      Toastify({ text: error.message, duration: 3000, backgroundColor: "#d32f2f" }).showToast();
+      btn.disabled = false;
+      btn.textContent = "Sign Up";
+      spinner.style.display = "none";
+    }
+  });
+
+   function greetUser(name) {
+  const greeting = `Welcome, ${name}. Luna is happy to meet you!`;
+  const utterance = new SpeechSynthesisUtterance(greeting);
+
+  function setVoiceAndSpeak() {
+    const voices = speechSynthesis.getVoices();
+    const femaleVoice = voices.find(v => v.name.includes("Google") || v.name.toLowerCase().includes("female"));
+    if (femaleVoice) utterance.voice = femaleVoice;
+    speechSynthesis.speak(utterance);
+  }
+
+  // Wait until voices are loaded
+  if (speechSynthesis.getVoices().length === 0) {
+    speechSynthesis.onvoiceschanged = setVoiceAndSpeak;
+  } else {
+    setVoiceAndSpeak();
+  }
+}
+</script>
+
 </body>
 </html>

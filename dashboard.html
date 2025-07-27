@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Luna Dashboard</title>
+  <style>
+    /* Reset */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      height: 100vh;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #1e3c72, #2a5298);
+      background-size: 400% 400%;
+      animation: gradientMove 15s ease infinite;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: start;
+      padding: 40px 20px;
+    }
+
+    @keyframes gradientMove {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .dashboard-container {
+      width: 100%;
+      max-width: 800px;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 30px;
+      border-radius: 20px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+      text-align: center;
+    }
+
+    .dashboard-container h1 {
+      font-size: 32px;
+      margin-bottom: 10px;
+    }
+
+    .dashboard-container p {
+      font-size: 18px;
+      margin-bottom: 30px;
+      color: #f0f0f0;
+    }
+
+    .luna-response {
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.1);
+      padding: 20px;
+      border-radius: 15px;
+      font-size: 16px;
+      color: #d0f1ff;
+    }
+
+    .footer {
+      margin-top: 40px;
+      font-size: 14px;
+      opacity: 0.7;
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard-container">
+    <h1>Welcome to Luna Assistant</h1>
+    <p>Hello <span id="userName">User</span>, your AI assistant is ready.</p>
+
+    <div class="luna-response" id="lunaResponse">
+      Luna: Ready to assist you!
+    </div>
+  </div>
+
+  <div class="footer">
+    &copy; 2025 Luna AI Assistant
+  </div>
+
+  <script>
+    // Simulate personalized greeting (fetch name from localStorage)
+    const name = localStorage.getItem('lunaName') || 'User';
+    document.getElementById('userName').textContent = name;
+
+    // Speak welcome message
+    const greeting = `Hello ${name}, welcome back! Luna is ready to assist you.`;
+    const utterance = new SpeechSynthesisUtterance(greeting);
+
+    function speakGreeting() {
+      const voices = speechSynthesis.getVoices();
+      const femaleVoice = voices.find(v => v.name.includes("Google") || v.name.toLowerCase().includes("female"));
+      if (femaleVoice) utterance.voice = femaleVoice;
+      speechSynthesis.speak(utterance);
+    }
+
+    if (speechSynthesis.getVoices().length === 0) {
+      speechSynthesis.onvoiceschanged = speakGreeting;
+    } else {
+      speakGreeting();
+    }
+  </script>
+</body>
+</html>
