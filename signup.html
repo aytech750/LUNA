@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Luna - Sign Up</title>
+  <link rel="stylesheet" href="signup.css" />
+  <style>
+    body, html {
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', sans-serif;
+  height: 100%;
+  overflow-x: hidden;
+  color: #fff;
+}
+
+.gradient-bg {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(-45deg, #0f172a, #2563eb, #9333ea, #0ea5e9);
+  background-size: 400% 400%;
+  animation: gradientMove 10s ease infinite;
+  z-index: -1;
+}
+
+@keyframes gradientMove {
+  0% { background-position: 0% 50% }
+  50% { background-position: 100% 50% }
+  100% { background-position: 0% 50% }
+}
+
+.signup-container {
+  max-width: 400px;
+  margin: 60px auto;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(12px);
+  text-align: center;
+}
+
+.logo {
+  width: 80px;
+  margin-bottom: 10px;
+  animation: spinLogo 4s linear infinite;
+}
+
+@keyframes spinLogo {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.signup-form input {
+  width: 100%;
+  padding: 12px;
+  margin: 12px 0;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  transition: background 0.3s;
+}
+.signup-form input:focus {
+  background: rgba(255, 255, 255, 0.25);
+  outline: none;
+}
+
+.signup-form button {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  background: #1d4ed8;
+  color: #fff;
+  font-size: 16px;
+  border-radius: 8px;
+  margin-top: 10px;
+  transition: 0.3s ease;
+  cursor: pointer;
+}
+.signup-form button:hover {
+  background: #2563eb;
+  transform: scale(1.02);
+}
+
+.note {
+  font-size: 14px;
+  margin-top: 15px;
+}
+.note a {
+  color: #38bdf8;
+  text-decoration: none;
+}
+.note a:hover {
+  text-decoration: underline;
+}
+
+.about-luna {
+  padding: 50px 20px;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.2);
+  margin-top: 50px;
+  backdrop-filter: blur(10px);
+}
+.about-luna h2 {
+  font-size: 28px;
+  margin-bottom: 20px;
+}
+.luna {
+  color: #38bdf8;
+}
+
+.features {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 30px;
+  max-width: 800px;
+  margin: 0 auto;
+  text-align: left;
+}
+.features div {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 20px;
+  border-radius: 10px;
+}
+
+.connect {
+  margin-top: 30px;
+}
+.connect p {
+  font-size: 16px;
+  margin-bottom: 10px;
+}
+.connect a img {
+  width: 40px;
+  margin: 0 10px;
+  transition: transform 0.3s ease;
+}
+.connect a img:hover {
+  transform: scale(1.1);
+}
+
+.credits {
+  margin-top: 20px;
+  font-size: 14px;
+  color: #ccc;
+}
+
+  </style>
+</head>
+<body>
+  <div class="gradient-bg"></div>
+
+  <div class="signup-container">
+    <img src="https://i.imgur.com/8KlT8jJ.png" alt="Luna Logo" class="logo">
+    <h1>Create Your Luna Account</h1>
+    <form class="signup-form">
+      <input type="text" placeholder="Full Name" required>
+      <input type="email" placeholder="Email Address" required>
+      <input type="password" placeholder="Create Password" required>
+      <button type="submit">Sign Up</button>
+      <p class="note">Already have an account? <a href="login.html">Login</a></p>
+    </form>
+  </div>
+
+  <section class="about-luna">
+    <h2>Why Choose <span class="luna">Luna</span>?</h2>
+    <p>Luna is the smartest voice AI social media assistant designed to keep you connected hands-free.</p>
+
+    <div class="features">
+      <div>
+        <h3>Our Mission</h3>
+        <p>To redefine how humans interact with technology using seamless voice experiences.</p>
+      </div>
+      <div>
+        <h3>Our Vision</h3>
+        <p>To become the world’s most intuitive voice-based AI platform.</p>
+      </div>
+      <div>
+        <h3>Innovation</h3>
+        <p>Luna blends real-time voice processing, smart replies, and cross-platform social integration.</p>
+      </div>
+    </div>
+
+    <div class="connect">
+      <p>Connect with us:</p>
+      <a href="https://wa.me/2340000000000" target="_blank">
+        <img src="https://img.icons8.com/color/48/000000/whatsapp--v1.png" alt="WhatsApp">
+      </a>
+      <a href="https://instagram.com/luna_ai" target="_blank">
+        <img src="https://img.icons8.com/color/48/000000/instagram-new--v1.png" alt="Instagram">
+      </a>
+      <a href="https://www.tiktok.com/@luna_ai" target="_blank">
+        <img src="https://img.icons8.com/color/48/000000/tiktok--v1.png" alt="TikTok">
+      </a>
+    </div>
+    
+    <p class="credits">Built by <strong>AYTECH</strong></p>
+  </section>
+</body>
+</html>
