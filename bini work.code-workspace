@@ -1,0 +1,22 @@
+{
+	"folders": [
+		{
+			"path": "../bini work"
+		},
+		{
+			"path": "../elbethel"
+		},
+		{
+			"path": "../freeniumdata"
+		},
+		{
+			"path": "."
+		},
+		{
+			"path": "../osunride"
+		}
+	],
+	"settings": {
+		"liveServer.settings.multiRootWorkspaceName": "luna"
+	}
+}
