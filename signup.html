@@ -22,11 +22,11 @@
 
       <div class="record-wakeword">
         <p class="record-title">Record voice recognition</p>
-        <button id="recordBtn">
-    <img src="https://cdn-icons-png.flaticon.com/512/727/727245.png" class="mic-icon" />
-    start Voice Recognition
-  </button>
-  <div id="record-status"> not recording</div>
+        <button id="recordBtn" type="button">
+          <img src="https://cdn-icons-png.flaticon.com/512/727/727245.png" class="mic-icon" />
+          Start Voice Recognition
+        </button>
+        <div id="record-status">not recording</div>
       </div>
 
       <button type="submit">Sign Up</button>
@@ -40,13 +40,13 @@
   </div>
 
 <script>
-/* ---------------- CONFIG SECTION - replace values before running ---------------- */
-const CLOUDINARY_CLOUD = "dm8xazeob";    // your cloud name
-const CLOUDINARY_PRESET = "luna_unsigned";// your unsigned preset
-const ANALYSIS_SERVER = "http://localhost:3001"; // server URL (change if deployed)
-/* ------------------------------------------------------------------------------- */
+/* ---------------- CONFIG SECTION ---------------- */
+const CLOUDINARY_CLOUD = "dm8xazeob";
+const CLOUDINARY_PRESET = "luna_unsigned";
+const ANALYSIS_SERVER = "https://luna-backend-rntz.onrender.com";
+/* ------------------------------------------------- */
 
-/* Firebase config - keep as you already have or replace with your project's config */
+/* Firebase config */
 const firebaseConfig = {
   apiKey: "AIzaSyDN4hgEwEZkL0gzEmlRWlabjAEt6fY3c88",
   authDomain: "luna-app-a3c50.firebaseapp.com",
@@ -59,123 +59,123 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
- let mediaRecorder;
-    let audioChunks = [];
-    let voiceBlob;
-    let audioURL;
-    let transcriptText = "";
-    let detectedMood = "";
+let mediaRecorder;
+let audioChunks = [];
+let voiceBlob;
+let audioURL;
+let transcriptText = "";
+let detectedMood = "";
 
-    // Small list of wake words
-    const wakeWords = ["sunshine", "galaxy", "luna", "starlight", "harmony"];
-    let currentWakeWord = "";
+const wakeWords = ["sunshine", "galaxy", "luna", "starlight", "harmony"];
+let currentWakeWord = "";
 
-    // Helper: Luna speaks
-    function speakLuna(text) {
-      const utter = new SpeechSynthesisUtterance(text);
-      utter.lang = "en-US";
-      speechSynthesis.speak(utter);
+function speakLuna(text) {
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang = "en-US";
+  speechSynthesis.speak(utter);
+}
+
+async function uploadAndAnalyzeVoice() {
+  const status = document.getElementById("record-status");
+  try {
+    const formData = new FormData();
+    formData.append("file", voiceBlob);
+    formData.append("upload_preset", CLOUDINARY_PRESET);
+
+    const uploadUrl = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/raw/upload`;
+    const upRes = await fetch(uploadUrl, { method: "POST", body: formData });
+    const upJson = await upRes.json();
+    if (!upRes.ok) {
+      console.error("Cloudinary failed:", upJson);
+      status.textContent = "Cloudinary upload failed";
+      return;
     }
+    audioURL = upJson.secure_url;
+    status.textContent = "Uploaded. Analyzing mood...";
 
-    // Upload + analyze function
-    async function uploadAndAnalyzeVoice() {
-      const status = document.getElementById("record-status");
-      try {
-        const formData = new FormData();
-        formData.append("file", voiceBlob);
-        formData.append("upload_preset", CLOUDINARY_PRESET);
-
-        const uploadUrl = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/raw/upload`;
-        const upRes = await fetch(uploadUrl, { method: "POST", body: formData });
-        const upJson = await upRes.json();
-        if (!upRes.ok) {
-          console.error("Cloudinary failed:", upJson);
-          status.textContent = "Cloudinary upload failed";
-          return;
-        }
-        audioURL = upJson.secure_url;
-        status.textContent = "Uploaded. Analyzing mood...";
-
-        const analyzeRes = await fetch(`${ANALYSIS_SERVER}/api/analyze_deepgram`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ audio_url: audioURL })
-        });
-        const analysis = await analyzeRes.json();
-        detectedMood = analysis.mood || analysis.emotion || "neutral";
-        status.textContent = `Detected mood: ${detectedMood}`;
-        speakLuna("Voice recognition complete.");
-        Toastify({
-          text: `Voice recognition successful! Mood: ${detectedMood}`,
-          duration: 3000,
-          backgroundColor: "#4caf50"
-        }).showToast();
-      } catch (err) {
-        console.error("upload/analysis error", err);
-        status.textContent = "Upload or analysis failed";
-      }
-    }
-
-    // Record button logic
-    document.getElementById("recordBtn").addEventListener("click", async () => {
-      const recordBtn = document.getElementById("recordBtn");
-      const status = document.getElementById("record-status");
-
-      // Pick random wake word
-      currentWakeWord = wakeWords[Math.floor(Math.random() * wakeWords.length)];
-      speakLuna(`Please say the word: ${currentWakeWord}`);
-      status.textContent = `Luna says: "${currentWakeWord}"`;
-
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        mediaRecorder = new MediaRecorder(stream);
-        audioChunks = [];
-
-        mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
-
-        mediaRecorder.onstop = async () => {
-          voiceBlob = new Blob(audioChunks, { type: "audio/webm" });
-
-          // Speech Recognition check
-          let recognizedText = "";
-          if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
-            const Rec = window.SpeechRecognition || window.webkitSpeechRecognition;
-            const r = new Rec();
-            r.lang = 'en-US';
-            r.onresult = (ev) => {
-              recognizedText = ev.results[0][0].transcript.trim().toLowerCase();
-              transcriptText = recognizedText;
-
-              if (recognizedText === currentWakeWord.toLowerCase()) {
-                status.textContent = "Correct word detected. Uploading...";
-                uploadAndAnalyzeVoice();
-              } else {
-                status.textContent = `Word mismatch! You said "${recognizedText}", expected "${currentWakeWord}"`;
-                speakLuna("Voice recognition failed. Please try again.");
-              }
-            };
-            r.start();
-          } else {
-            alert("Speech recognition not supported in this browser.");
-          }
-        };
-
-        mediaRecorder.start();
-        status.textContent += " — Recording now...";
-        recordBtn.disabled = true;
-
-        setTimeout(() => {
-          try { mediaRecorder.stop(); } catch (e) { console.warn(e); }
-          recordBtn.disabled = false;
-          recordBtn.innerHTML = `<img src="https://cdn-icons-png.flaticon.com/512/727/727245.png" class="mic-icon" /> Re-record Voice Sample`;
-        }, 3000);
-
-      } catch (err) {
-        console.error(err);
-        alert("Microphone access denied or not available.");
-        status.textContent = "Recording failed";
-      }
+    const analyzeRes = await fetch(`${ANALYSIS_SERVER}/api/analyze_deepgram`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ audio_url: audioURL })
     });
-  </script>
+    const analysis = await analyzeRes.json();
+    detectedMood = analysis.mood || analysis.emotion || "neutral";
+    status.textContent = `Detected mood: ${detectedMood}`;
+    speakLuna("Voice recognition complete.");
+    Toastify({
+      text: `Voice recognition successful! Mood: ${detectedMood}`,
+      duration: 3000,
+      backgroundColor: "#4caf50"
+    }).showToast();
+  } catch (err) {
+    console.error("upload/analysis error", err);
+    status.textContent = "Upload or analysis failed";
+  }
+}
+
+document.getElementById("recordBtn").addEventListener("click", async () => {
+  const recordBtn = document.getElementById("recordBtn");
+  const status = document.getElementById("record-status");
+
+  if (!('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
+    alert("Speech recognition not supported in this browser.");
+    return;
+  }
+
+  // Pick wake word
+  currentWakeWord = wakeWords[Math.floor(Math.random() * wakeWords.length)];
+  speakLuna(`Please say the word: ${currentWakeWord}`);
+  status.textContent = `Luna says: "${currentWakeWord}" — Recording now...`;
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaRecorder = new MediaRecorder(stream);
+    audioChunks = [];
+
+    // Start speech recognition immediately
+    const Rec = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const r = new Rec();
+    r.lang = 'en-US';
+    r.interimResults = false;
+    r.maxAlternatives = 1;
+
+    let recognizedText = "";
+    r.onresult = (ev) => {
+      recognizedText = ev.results[0][0].transcript.trim().toLowerCase();
+      transcriptText = recognizedText;
+    };
+
+    r.start();
+    mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+
+    mediaRecorder.onstop = async () => {
+      voiceBlob = new Blob(audioChunks, { type: "audio/webm" });
+      r.stop();
+
+      if (recognizedText === currentWakeWord.toLowerCase()) {
+        status.textContent = "Correct word detected. Uploading...";
+        await uploadAndAnalyzeVoice();
+      } else {
+        status.textContent = `Word mismatch! You said "${recognizedText}", expected "${currentWakeWord}"`;
+        speakLuna("Voice recognition failed. Please try again.");
+      }
+    };
+
+    mediaRecorder.start();
+    recordBtn.disabled = true;
+
+    setTimeout(() => {
+      try { mediaRecorder.stop(); } catch (e) { console.warn(e); }
+      recordBtn.disabled = false;
+      recordBtn.innerHTML = `<img src="https://cdn-icons-png.flaticon.com/512/727/727245.png" class="mic-icon" /> Re-record Voice Sample`;
+    }, 3000);
+
+  } catch (err) {
+    console.error(err);
+    alert("Microphone access denied or not available.");
+    status.textContent = "Recording failed";
+  }
+});
+</script>
 </body>
 </html>
