@@ -22,11 +22,11 @@
 
       <div class="record-wakeword">
         <p class="record-title">Record voice recognition</p>
-        <button type="button" id="recordBtn">
-          <img src="https://cdn-icons-png.flaticon.com/512/727/727245.png" alt="Mic" class="mic-icon">
-          <span>Start Recording</span>
-        </button>
-        <p class="record-status" id="record-status">Not recording</p>
+        <button id="recordBtn">
+    <img src="https://cdn-icons-png.flaticon.com/512/727/727245.png" class="mic-icon" />
+    start Voice Recognition
+  </button>
+  <div id="record-status"> not recording</div>
       </div>
 
       <button type="submit">Sign Up</button>
@@ -59,43 +59,27 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-/* State */
-let mediaRecorder, audioChunks = [], voiceBlob = null, audioURL = "", transcriptText = "";
-let detectedMood = "neutral";
+ let mediaRecorder;
+    let audioChunks = [];
+    let voiceBlob;
+    let audioURL;
+    let transcriptText = "";
+    let detectedMood = "";
 
-/* Utility: speak with mood adjustments */
-function speakLuna(text, mood = "neutral") {
-  const opts = { rate: 1.0, pitch: 0 };
-  if (mood === "happy" || mood === "joy") { opts.rate = 1.25; opts.pitch = 2; }
-  else if (mood === "angry") { opts.rate = 1.1; opts.pitch = 1; }
-  else if (mood === "sad") { opts.rate = 0.9; opts.pitch = -2; }
-  // pick a voice (best-effort)
-  const voices = window.speechSynthesis.getVoices();
-  const u = new SpeechSynthesisUtterance(text);
-  u.rate = opts.rate;
-  u.pitch = opts.pitch;
-  // prefer an English voice if available
-  const pick = voices.find(v => v.lang && v.lang.startsWith('en')) || voices[0];
-  if (pick) u.voice = pick;
-  window.speechSynthesis.speak(u);
-}
+    // Small list of wake words
+    const wakeWords = ["sunshine", "galaxy", "luna", "starlight", "harmony"];
+    let currentWakeWord = "";
 
-/* Recording + upload + server analysis flow */
-document.getElementById("recordBtn").addEventListener("click", async () => {
-  const recordBtn = document.getElementById("recordBtn");
-  const status = document.getElementById("record-status");
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    mediaRecorder = new MediaRecorder(stream);
-    audioChunks = [];
+    // Helper: Luna speaks
+    function speakLuna(text) {
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = "en-US";
+      speechSynthesis.speak(utter);
+    }
 
-    // capture chunks
-    mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
-
-    // on stop: build blob, upload to cloudinary, then call analysis server
-    mediaRecorder.onstop = async () => {
-      voiceBlob = new Blob(audioChunks, { type: "audio/webm" });
-      status.textContent = "Uploading audio to Cloudinary...";
+    // Upload + analyze function
+    async function uploadAndAnalyzeVoice() {
+      const status = document.getElementById("record-status");
       try {
         const formData = new FormData();
         formData.append("file", voiceBlob);
@@ -112,106 +96,86 @@ document.getElementById("recordBtn").addEventListener("click", async () => {
         audioURL = upJson.secure_url;
         status.textContent = "Uploaded. Analyzing mood...";
 
-        // Optional: quick local speech recognition (if available) to get a transcript
-        try {
-          if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
-            const Rec = window.SpeechRecognition || window.webkitSpeechRecognition;
-            const r = new Rec();
-            r.lang = 'en-US';
-            r.onresult = (ev) => { transcriptText = ev.results[0][0].transcript; };
-            r.start();
-            // stop after short delay (we already have audio; this is best-effort)
-            setTimeout(()=>{ try{ r.stop(); }catch(e){} }, 1200);
-          }
-        } catch(e){ console.warn("local speech rec failed", e); }
-
-        // Call your analysis server (Deepgram) to get mood/emotion
         const analyzeRes = await fetch(`${ANALYSIS_SERVER}/api/analyze_deepgram`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ audio_url: audioURL })
         });
         const analysis = await analyzeRes.json();
-        // analysis shape depends on your server; we expect analysis.mood or analysis.emotion
         detectedMood = analysis.mood || analysis.emotion || "neutral";
         status.textContent = `Detected mood: ${detectedMood}`;
-        speakLuna("Voice recognition SUCCESSFUL.");
-        Toastify({ text: `Voice RECOGNITION SUCCESSFUL! Detected mood: ${detectedMood}`, duration: 3000, backgroundColor: "#4caf50" }).showToast();
+        speakLuna("Voice recognition complete.");
+        Toastify({
+          text: `Voice recognition successful! Mood: ${detectedMood}`,
+          duration: 3000,
+          backgroundColor: "#4caf50"
+        }).showToast();
       } catch (err) {
         console.error("upload/analysis error", err);
         status.textContent = "Upload or analysis failed";
       }
-    };
+    }
 
-    // start
-    mediaRecorder.start();
-    status.textContent = "Recording... speak now";
-    recordBtn.disabled = true;
+    // Record button logic
+    document.getElementById("recordBtn").addEventListener("click", async () => {
+      const recordBtn = document.getElementById("recordBtn");
+      const status = document.getElementById("record-status");
 
-    // stop automatically after 4s
-    setTimeout(() => {
-      try { mediaRecorder.stop(); } catch (e) { console.warn(e); }
-      recordBtn.disabled = false;
-      recordBtn.innerHTML = `<img src="https://cdn-icons-png.flaticon.com/512/727/727245.png" class="mic-icon" /> Re-record Voice Sample`;
-    }, 4000);
+      // Pick random wake word
+      currentWakeWord = wakeWords[Math.floor(Math.random() * wakeWords.length)];
+      speakLuna(`Please say the word: ${currentWakeWord}`);
+      status.textContent = `Luna says: "${currentWakeWord}"`;
 
-  } catch (err) {
-    console.error(err);
-    alert("Microphone access denied or not available.");
-    document.getElementById("record-status").textContent = "Recording failed";
-  }
-});
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+        audioChunks = [];
 
-/* Signup submit: ask user for gender (quick prompt), assign opposite-luna, save to Firestore */
-document.getElementById("signupForm").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const name = document.getElementById("name").value.trim();
-  const email = document.getElementById("email").value.trim();
-  const password = document.getElementById("password").value;
-  const spinner = document.getElementById("spinnerOverlay");
-  const btn = document.querySelector("button[type='submit']");
+        mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
 
-  if (!voiceBlob || !audioURL) {
-    Toastify({ text: "Please record your voice sample!", duration: 3000, backgroundColor: "#ffa000" }).showToast();
-    return;
-  }
+        mediaRecorder.onstop = async () => {
+          voiceBlob = new Blob(audioChunks, { type: "audio/webm" });
 
-  // quick prompt to get user's gender (keeps your HTML unchanged)
-  let userGender = prompt("What's your gender? (male / female / other)", "other");
-  if (userGender) userGender = userGender.toLowerCase();
-  else userGender = "other";
+          // Speech Recognition check
+          let recognizedText = "";
+          if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
+            const Rec = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const r = new Rec();
+            r.lang = 'en-US';
+            r.onresult = (ev) => {
+              recognizedText = ev.results[0][0].transcript.trim().toLowerCase();
+              transcriptText = recognizedText;
 
-  // assign opposite luna gender (female <-> male), default female for other
-  let lunaVoice = (userGender === "male") ? "female" : (userGender === "female" ? "male" : "female");
+              if (recognizedText === currentWakeWord.toLowerCase()) {
+                status.textContent = "Correct word detected. Uploading...";
+                uploadAndAnalyzeVoice();
+              } else {
+                status.textContent = `Word mismatch! You said "${recognizedText}", expected "${currentWakeWord}"`;
+                speakLuna("Voice recognition failed. Please try again.");
+              }
+            };
+            r.start();
+          } else {
+            alert("Speech recognition not supported in this browser.");
+          }
+        };
 
-  btn.disabled = true; spinner.style.display = "flex";
+        mediaRecorder.start();
+        status.textContent += " — Recording now...";
+        recordBtn.disabled = true;
 
-  try {
-    const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-    const uid = userCredential.user.uid;
+        setTimeout(() => {
+          try { mediaRecorder.stop(); } catch (e) { console.warn(e); }
+          recordBtn.disabled = false;
+          recordBtn.innerHTML = `<img src="https://cdn-icons-png.flaticon.com/512/727/727245.png" class="mic-icon" /> Re-record Voice Sample`;
+        }, 3000);
 
-    // save to Firestore - include detectedMood from analysis
-    await db.collection("users").doc(uid).set({
-      name,
-      email,
-      gender: userGender,
-      lunaVoice,
-      detectedMood,
-      voiceSampleURL: audioURL,
-      voiceTranscript: transcriptText || "",
-      createdAt: new Date()
+      } catch (err) {
+        console.error(err);
+        alert("Microphone access denied or not available.");
+        status.textContent = "Recording failed";
+      }
     });
-
-    speakLuna(`Welcome, ${name}. I will speak with a ${lunaVoice} voice.`, detectedMood);
-    Toastify({ text: `Welcome, ${name}!`, duration: 3000, backgroundColor: "#2563eb" }).showToast();
-
-    setTimeout(()=> window.location.href = "dashboard.html", 2000);
-  } catch (err) {
-    console.error(err);
-    Toastify({ text: err.message || "Signup failed", duration: 3000, backgroundColor: "#d32f2f" }).showToast();
-    btn.disabled = false; spinner.style.display = "none";
-  }
-});
-</script>
+  </script>
 </body>
 </html>
