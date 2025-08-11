@@ -113,7 +113,7 @@ async function uploadAndAnalyzeVoice() {
   }
 }
 
-document.getElementById("recordBtn").addEventListener("click", async () => {
+document.getElementById("recordBtn").addEventListener("click", () => {
   const recordBtn = document.getElementById("recordBtn");
   const status = document.getElementById("record-status");
 
@@ -124,57 +124,62 @@ document.getElementById("recordBtn").addEventListener("click", async () => {
 
   // Pick wake word
   currentWakeWord = wakeWords[Math.floor(Math.random() * wakeWords.length)];
+  status.textContent = `Luna says: "${currentWakeWord}"`;
+
+  // Speak the wake word first
   speakLuna(`Please say the word: ${currentWakeWord}`);
-  status.textContent = `Luna says: "${currentWakeWord}" — Recording now...`;
 
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    mediaRecorder = new MediaRecorder(stream);
-    audioChunks = [];
+  // Delay starting recording until Luna finishes speaking
+  setTimeout(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder = new MediaRecorder(stream);
+      audioChunks = [];
 
-    // Start speech recognition immediately
-    const Rec = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const r = new Rec();
-    r.lang = 'en-US';
-    r.interimResults = false;
-    r.maxAlternatives = 1;
+      const Rec = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const r = new Rec();
+      r.lang = 'en-US';
+      r.interimResults = false;
+      r.maxAlternatives = 1;
 
-    let recognizedText = "";
-    r.onresult = (ev) => {
-      recognizedText = ev.results[0][0].transcript.trim().toLowerCase();
-      transcriptText = recognizedText;
-    };
+      let recognizedText = "";
+      r.onresult = (ev) => {
+        recognizedText = ev.results[0][0].transcript.trim().toLowerCase();
+        transcriptText = recognizedText;
+      };
 
-    r.start();
-    mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+      r.start();
+      status.textContent = `Recording now... Please say "${currentWakeWord}"`;
+      mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
 
-    mediaRecorder.onstop = async () => {
-      voiceBlob = new Blob(audioChunks, { type: "audio/webm" });
-      r.stop();
+      mediaRecorder.onstop = async () => {
+        voiceBlob = new Blob(audioChunks, { type: "audio/webm" });
+        r.stop();
 
-      if (recognizedText === currentWakeWord.toLowerCase()) {
-        status.textContent = "Correct word detected. Uploading...";
-        await uploadAndAnalyzeVoice();
-      } else {
-        status.textContent = `Word mismatch! You said "${recognizedText}", expected "${currentWakeWord}"`;
-        speakLuna("Voice recognition failed. Please try again.");
-      }
-    };
+        if (recognizedText === currentWakeWord.toLowerCase()) {
+          status.textContent = "Correct word detected. Uploading...";
+          await uploadAndAnalyzeVoice();
+        } else {
+          status.textContent = `Word mismatch! You said "${recognizedText}", expected "${currentWakeWord}"`;
+          speakLuna("Voice recognition failed. Please try again.");
+        }
+      };
 
-    mediaRecorder.start();
-    recordBtn.disabled = true;
+      mediaRecorder.start();
+      recordBtn.disabled = true;
 
-    setTimeout(() => {
-      try { mediaRecorder.stop(); } catch (e) { console.warn(e); }
-      recordBtn.disabled = false;
-      recordBtn.innerHTML = `<img src="https://cdn-icons-png.flaticon.com/512/727/727245.png" class="mic-icon" /> Re-record Voice Sample`;
-    }, 3000);
+      setTimeout(() => {
+        try { mediaRecorder.stop(); } catch (e) { console.warn(e); }
+        recordBtn.disabled = false;
+        recordBtn.innerHTML = `<img src="https://cdn-icons-png.flaticon.com/512/727/727245.png" class="mic-icon" /> Re-record Voice Sample`;
+      }, 3000);
 
-  } catch (err) {
-    console.error(err);
-    alert("Microphone access denied or not available.");
-    status.textContent = "Recording failed";
-  }
+    } catch (err) {
+      console.error(err);
+      alert("Microphone access denied or not available.");
+      status.textContent = "Recording failed";
+    }
+  }, 1500); // Delay to avoid recording Luna's own voice
 });
 </script>
 </body>
