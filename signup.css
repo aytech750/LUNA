@@ -219,21 +219,21 @@ form button:hover {
   color: #f1c40f;
 }
 
-.record-btn {
-  background-color: #00aaff;
+.recordBtn {
+  background-color: #090d10;
   border: none;
   border-radius: 30px;
   padding: 12px 25px;
   color: white;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 15px;
   cursor: pointer;
   transition: background 0.3s;
   font-size: 16px;
 }
 
-.record-btn:hover {
+.recordtn:hover {
   background-color: #0088cc;
 }
 
@@ -254,4 +254,17 @@ form button:hover {
   font-size: 14px;
   color: #eee;
   font-style: italic;
+}
+button#recordBtn {
+  background-color: #6291ff;
+  border: none;
+  border-radius: 5px;
+  padding: 12px 25px;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  cursor: pointer;
+  transition: background 0.3s;
+  font-size: 16px;
 }
